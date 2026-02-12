@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kanji Flashcards (Single HTML)</title>
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --text:#e6e9f2;
+      --muted:#a8b0c3;
+      --accent:#7cdbff;
+      --good:#34d399;
+      --bad:#fb7185;
+      --ring:rgba(124,219,255,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, Arial;
+      background: radial-gradient(1200px 600px at 10% 0%, rgba(124,219,255,.08), transparent 55%),
+                  radial-gradient(900px 500px at 95% 10%, rgba(251,191,36,.07), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .app{ width:min(980px, 100%); }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .brand{ display:flex; align-items:center; gap:10px; user-select:none; }
+    .logo{
+      width:42px;height:42px; border-radius:14px;
+      background: linear-gradient(145deg, rgba(124,219,255,.25), rgba(124,219,255,.05));
+      border:1px solid rgba(124,219,255,.25);
+      box-shadow: 0 0 0 6px rgba(124,219,255,.06);
+      display:grid;place-items:center;
+      font-weight:800; letter-spacing:.5px; color:var(--accent);
+    }
+    .brand h1{ margin:0; font-size:16px; font-weight:800; }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .content{ padding:18px; }
+
+    .card{
+      background: rgba(16,25,46,.55);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding:16px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+    }
+
+    .btnrow{ display:flex; flex-wrap:wrap; gap:10px; }
+    button, .chip{
+      -webkit-tap-highlight-color: transparent;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease;
+    }
+    button:hover{ border-color: rgba(124,219,255,.35); background: rgba(124,219,255,.07); }
+    button:active{ transform: translateY(1px) scale(.99); }
+    button.primary{ border-color: rgba(124,219,255,.4); background: rgba(124,219,255,.12); box-shadow: 0 0 0 6px rgba(124,219,255,.06); }
+    button.ghost{ border-color: rgba(255,255,255,.08); background: rgba(255,255,255,.02); color: var(--muted); }
+    button.danger{ border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10); }
+    button:focus-visible{ outline:none; box-shadow: 0 0 0 4px var(--ring); }
+
+    .title{ font-size:16px; font-weight:900; margin:0 0 6px; }
+    .sub{ margin:0; font-size:13px; color:var(--muted); line-height:1.5; }
+    .divider{ height:1px; background: rgba(255,255,255,.08); margin:14px 0; }
+
+    .level-list{ display:flex; flex-direction:column; gap:10px; }
+    .level-item{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px;
+      border-radius: 16px;
+      background: rgba(15,23,42,.55);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .level-meta{ display:flex; flex-direction:column; gap:2px; }
+    .level-name{ font-weight:900; }
+    .level-desc{ font-size:12px; color:var(--muted); }
+
+    .hidden{ display:none !important; }
+
+    /* Flashcard */
+    .flashcard{
+      border-radius: 22px;
+      padding:18px;
+      background: radial-gradient(800px 240px at 15% 0%, rgba(124,219,255,.10), transparent 45%),
+                  radial-gradient(800px 240px at 95% 0%, rgba(251,191,36,.08), transparent 45%),
+                  rgba(16,25,46,.65);
+      border:1px solid rgba(255,255,255,.09);
+      box-shadow: 0 14px 28px rgba(0,0,0,.30);
+      min-height: 260px;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+    }
+    .fc-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(124,219,255,.28);
+      background: rgba(124,219,255,.08);
+      color: var(--accent);
+      font-weight:900;
+    }
+    .progress{ font-size:12px; color: var(--muted); }
+
+    .stage{
+      border-radius: 20px;
+      background: rgba(11,15,26,.35);
+      border:1px dashed rgba(255,255,255,.14);
+      display:grid;
+      place-items:center;
+      padding:14px;
+      text-align:center;
+    }
+
+    .big{ font-size: 92px; font-weight: 900; letter-spacing: .02em; line-height: 1; margin:0; }
+    .reading{ font-size: 34px; font-weight: 900; margin:0; }
+    .word{ font-size: 44px; font-weight: 900; margin:0; }
+    .wordReading{ font-size: 26px; font-weight: 800; margin:0; color: rgba(230,233,242,.92); }
+    .romaji{ margin:8px 0 0; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+    .hint{ margin-top:8px; font-size:12px; color: var(--muted); }
+
+    .fc-controls{ display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; }
+    .left-controls, .right-controls{ display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* Test */
+    .checklist{ display:flex; flex-direction:column; gap:10px; }
+    .check-item{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px;
+      border-radius: 16px;
+      background: rgba(15,23,42,.55);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .check-item label{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+    .check-item input{ width:18px; height:18px; }
+
+    .options{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:12px; }
+    @media (min-width: 720px){
+      .options{ grid-template-columns: 1fr 1fr; }
+    }
+    .opt{
+      text-align:left;
+      padding:12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .opt .main{ font-weight:900; font-size:16px; }
+    .opt .sub{ font-size:12px; color: var(--muted); }
+    .opt.good{ border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.10); }
+    .opt.bad{ border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.10); }
+
+    .test-mark{
+      margin: 8px auto 0;
+      width: 78px;
+      height: 78px;
+      border-radius: 22px;
+      display:grid;
+      place-items:center;
+      font-weight: 1000;
+      font-size: 52px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      box-shadow: 0 10px 20px rgba(0,0,0,.20);
+    }
+    .test-mark.good{ border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.10); color: var(--good); }
+    .test-mark.bad{ border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.10); color: var(--bad); }
+
+    .test-compound{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      display:inline-block;
+      min-width: 220px;
+    }
+    .test-compound-word{ font-weight: 900; font-size: 18px; }
+    .test-compound-reading{ font-weight: 800; font-size: 14px; color: rgba(230,233,242,.92); margin-top: 2px; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,.92);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 32px rgba(0,0,0,.35);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{ opacity: 1; transform: translateX(-50%) translateY(-2px); }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre{ margin:0; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">字</div>
+        <div>
+          <h1>Kanji Flashcards</h1>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button id="btnHome" class="ghost">Home</button>
+        <button id="btnLevels" class="ghost">Levels</button>
+        <button id="btnReset" class="danger">Reset</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="content">
+
+        <!-- Home -->
+        <section id="screenHome">
+          <div class="card">
+            <h2 class="title" style="margin:0 0 10px;">Choose mode</h2>
+            <div class="btnrow">
+              <button id="btnGoTest" class="primary">Test mode</button>
+              <button id="btnGoFlash" class="ghost">Flashcards</button>
+            </div>
+            <p class="sub" style="margin-top:10px;">Test: pick levels → 4 choices. Flash: Space reveals.</p>
+          </div>
+        </section>
+
+        <!-- Test config -->
+        <section id="screenTestConfig" class="hidden">
+          <div class="card">
+            <div class="btnrow" style="justify-content:space-between; align-items:center; gap:12px;">
+              <div>
+                <h2 class="title" style="margin:0;">Test range</h2>
+                <p class="sub">Select levels to include.</p>
+              </div>
+              <div class="btnrow">
+                <label class="chip" style="display:inline-flex; align-items:center; gap:8px; padding:10px 12px;">
+                  <input id="testRomajiCheck" type="checkbox" style="width:16px; height:16px;" />
+                  Show Romaji
+                </label>
+                <button id="btnTestStart" class="primary">Start test</button>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div id="testLevelList" class="checklist" aria-label="Test level range"></div>
+          </div>
+        </section>
+
+        <!-- Test screen -->
+        <section id="screenTest" class="hidden">
+          <div class="flashcard" role="region" aria-label="Test">
+            <div class="fc-head">
+              <div class="badge" id="testBadge">TEST</div>
+              <div class="progress" id="testProgress">0 / 0</div>
+            </div>
+
+            <div class="stage" aria-live="polite">
+              <div>
+                <p class="big" id="testKanji">漢</p>
+                <!-- This exists to avoid null refs if code toggles it. Keep hidden by default. -->
+                <p class="romaji hidden" id="testKanjiHint">(choose reading)</p>
+
+                <div id="testMark" class="test-mark hidden" aria-hidden="true">◯</div>
+                <div id="testCompound" class="test-compound hidden">
+                  <div class="test-compound-word" id="testCompoundWord">—</div>
+                  <div class="test-compound-reading" id="testCompoundReading">—</div>
+                  <div class="romaji hidden" id="testCompoundRomaji">—</div>
+                </div>
+                <div class="hint" id="testHint">Pick the correct reading</div>
+              </div>
+            </div>
+
+            <div class="options" id="testOptions"></div>
+
+            <div class="fc-controls" style="margin-top:10px;">
+              <div class="left-controls">
+                <button id="btnTestSkip" class="ghost">Skip</button>
+                <button id="btnTestNext" class="primary" disabled>Next</button>
+              </div>
+              <div class="right-controls">
+                <button id="btnTestBack" class="ghost">Back</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:14px;">
+            <div class="btnrow" style="justify-content:space-between; align-items:center;">
+              <div>
+                <h2 class="title" style="margin:0;">Debug</h2>
+                <p class="sub">(for development)</p>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <pre id="debug" class="mono"></pre>
+          </div>
+        </section>
+
+        <!-- Levels -->
+        <section id="screenLevels" class="hidden">
+          <div class="card">
+            <div class="btnrow" style="justify-content:space-between; align-items:center; gap:12px;">
+              <h2 class="title" style="margin:0;">Levels</h2>
+              <div class="btnrow">
+                <button id="shuffleToggle" class="ghost" aria-pressed="false">Shuffle: OFF</button>
+                <button id="loopToggle" class="ghost" aria-pressed="true">Loop: ON</button>
+                <label class="chip" style="display:inline-flex; align-items:center; gap:8px; padding:10px 12px;">
+                  <input id="romajiCheck" type="checkbox" style="width:16px; height:16px;" />
+                  Show Romaji
+                </label>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div id="levelList" class="level-list" aria-label="Level list"></div>
+          </div>
+        </section>
+
+        <!-- Flashcards -->
+        <section id="screenFlash" class="hidden">
+          <div class="flashcard" role="region" aria-label="Flashcard">
+            <div class="fc-head">
+              <div class="badge" id="levelBadge">LEVEL</div>
+              <div class="progress" id="progressText">0 / 0</div>
+            </div>
+
+            <div class="stage" id="stage" aria-live="polite">
+              <div>
+                <p class="big" id="viewKanji">漢</p>
+                <p class="reading hidden" id="viewReading">かな</p>
+                <p class="romaji hidden" id="viewReadingRomaji">romaji</p>
+                <p class="word hidden" id="viewWord">—</p>
+                <p class="wordReading hidden" id="viewWordReading"></p>
+                <p class="romaji hidden" id="viewWordReadingRomaji"></p>
+                <div class="hint" id="hintText">Space: show reading</div>
+              </div>
+            </div>
+
+            <div class="fc-controls">
+              <div class="left-controls">
+                <button id="prevBtn" class="ghost">← Prev</button>
+                <button id="revealBtn" class="primary">Reveal</button>
+                <button id="nextBtn" class="ghost">Next →</button>
+              </div>
+              <div class="right-controls">
+                <button id="backToLevels" class="ghost">Back</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:14px;">
+            <div class="btnrow" style="justify-content:space-between; align-items:center;">
+              <div>
+                <h2 class="title" style="margin:0;">Debug</h2>
+                <p class="sub">(for development)</p>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <pre id="debugFlash" class="mono"></pre>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+
+    function assertEl(el, id){
+      if(!el) throw new Error(`Missing required element: #${id}`);
+      return el;
+    }
+
+    // Only these compounds are allowed
+    const COMPOUNDS = {
+      "中国人": { word: "中国人", readingKana: "ちゅうごくじん" },
+      "外国": { word: "外国", readingKana: "がいこく" },
+      "午前": { word: "午前", readingKana: "ごぜん" },
+      "午後": { word: "午後", readingKana: "ごご" },
+      "前後": { word: "前後", readingKana: "ぜんご" },
+      "一じ間": { word: "一じ間", readingKana: "いちじかん" },
+      "東南アジア": { word: "東南アジア", readingKana: "とうなんあじあ" },
+      "男の人": { word: "男の人", readingKana: "おとこのひと" },
+      "女の人": { word: "女の人", readingKana: "おんなのひと" },
+      "男子": { word: "男子", readingKana: "だんし" },
+      "女子": { word: "女子", readingKana: "じょし" },
+      "学生": { word: "学生", readingKana: "がくせい" },
+      "先生": { word: "先生", readingKana: "せんせい" },
+      "人生": { word: "人生", readingKana: "じんせい" },
+      "父": { word: "父", readingKana: "ちち" },
+      "母": { word: "母", readingKana: "はは" },
+      "お父さん": { word: "お父さん", readingKana: "おとうさん" },
+      "お母さん": { word: "お母さん", readingKana: "おかあさん" },
+      "今年": { word: "今年", readingKana: "ことし" },
+      "去年": { word: "去年", readingKana: "きょねん" },
+      "毎日": { word: "毎日", readingKana: "まいにち" },
+      "毎年": { word: "毎年", readingKana: "まいとし" },
+      "タイ王国": { word: "タイ王国", readingKana: "たいおうこく" },
+    };
+
+    // Kanji pool (order-free). Words are optional; ONLY those listed above are used.
+    const KANJI_POOL = [
+      { kanji: "下", readingKana: "した / げ" },
+      { kanji: "上", readingKana: "うえ / じょう" },
+      { kanji: "中", readingKana: "なか / ちゅう", word: COMPOUNDS["中国人"].word, wordReadingKana: COMPOUNDS["中国人"].readingKana },
+      { kanji: "外", readingKana: "そと / がい", word: COMPOUNDS["外国"].word, wordReadingKana: COMPOUNDS["外国"].readingKana },
+      { kanji: "右", readingKana: "みぎ" },
+
+      { kanji: "工", readingKana: "こう" },
+      { kanji: "左", readingKana: "ひだり" },
+      { kanji: "前", readingKana: "まえ / ぜん", word: COMPOUNDS["前後"].word, wordReadingKana: COMPOUNDS["前後"].readingKana },
+      { kanji: "後", readingKana: "うしろ / ご", word: COMPOUNDS["前後"].word, wordReadingKana: COMPOUNDS["前後"].readingKana },
+      { kanji: "午", readingKana: "ご", word: COMPOUNDS["午前"].word, wordReadingKana: COMPOUNDS["午前"].readingKana },
+
+      { kanji: "門", readingKana: "もん" },
+      { kanji: "間", readingKana: "あいだ / かん", word: COMPOUNDS["一じ間"].word, wordReadingKana: COMPOUNDS["一じ間"].readingKana },
+      { kanji: "東", readingKana: "ひがし / とう", word: COMPOUNDS["東南アジア"].word, wordReadingKana: COMPOUNDS["東南アジア"].readingKana },
+      { kanji: "西", readingKana: "にし / せい" },
+      { kanji: "南", readingKana: "みなみ / なん" },
+
+      { kanji: "北", readingKana: "きた / ほく" },
+      { kanji: "田", readingKana: "た" },
+      { kanji: "力", readingKana: "ちから / りき" },
+      { kanji: "男", readingKana: "おとこ / だん", word: COMPOUNDS["男の人"].word, wordReadingKana: COMPOUNDS["男の人"].readingKana },
+      { kanji: "女", readingKana: "おんな / じょ", word: COMPOUNDS["女の人"].word, wordReadingKana: COMPOUNDS["女の人"].readingKana },
+
+      { kanji: "子", readingKana: "こ / し", word: COMPOUNDS["男子"].word, wordReadingKana: COMPOUNDS["男子"].readingKana },
+      { kanji: "学", readingKana: "がく", word: COMPOUNDS["学生"].word, wordReadingKana: COMPOUNDS["学生"].readingKana },
+      { kanji: "生", readingKana: "せい", word: COMPOUNDS["人生"].word, wordReadingKana: COMPOUNDS["人生"].readingKana },
+      { kanji: "先", readingKana: "さき / せん", word: COMPOUNDS["先生"].word, wordReadingKana: COMPOUNDS["先生"].readingKana },
+      { kanji: "何", readingKana: "なに" },
+
+      { kanji: "父", readingKana: "ちち / とう", word: COMPOUNDS["父"].word, wordReadingKana: COMPOUNDS["父"].readingKana },
+      { kanji: "母", readingKana: "はは / かあ", word: COMPOUNDS["母"].word, wordReadingKana: COMPOUNDS["母"].readingKana },
+      { kanji: "年", readingKana: "とし / ねん", word: COMPOUNDS["今年"].word, wordReadingKana: COMPOUNDS["今年"].readingKana },
+      { kanji: "去", readingKana: "きょ", word: COMPOUNDS["去年"].word, wordReadingKana: COMPOUNDS["去年"].readingKana },
+      { kanji: "毎", readingKana: "まい", word: COMPOUNDS["毎日"].word, wordReadingKana: COMPOUNDS["毎日"].readingKana },
+
+      { kanji: "王", readingKana: "おう", word: COMPOUNDS["タイ王国"].word, wordReadingKana: COMPOUNDS["タイ王国"].readingKana },
+      { kanji: "国", readingKana: "くに / こく", word: COMPOUNDS["タイ王国"].word, wordReadingKana: COMPOUNDS["タイ王国"].readingKana },
+    ];
+
+    function buildLevels(pool){
+      const levels = [];
+      let i = 0;
+      let n = 1;
+      while(i < pool.length){
+        const remaining = pool.length - i;
+        let size = 6;
+        if(remaining === 5) size = 5;
+        if(remaining === 10) size = 5;
+        if(remaining === 11) size = 5;
+        if(remaining < 5) size = remaining;
+        const cards = pool.slice(i, i + size);
+        levels.push({ id: `lvl_${n}`, name: `Level ${n}`, cards });
+        i += size;
+        n += 1;
+      }
+      return levels;
+    }
+
+    const DATA = { levels: buildLevels(KANJI_POOL) };
+
+    const state = {
+      screen: "home", // home | testConfig | test | levels | flash
+      levelId: null,
+      deck: [],
+      index: 0,
+      phase: 0,
+      shuffle: false,
+      loop: true,
+      romaji: false,
+
+      // test
+      testSelected: new Set(),
+      testPool: [],
+      testCard: null,
+      testLocked: false,
+      testScore: { correct: 0, total: 0 },
+    };
+
+    const screens = {
+      home: assertEl($("#screenHome"), "screenHome"),
+      testConfig: assertEl($("#screenTestConfig"), "screenTestConfig"),
+      test: assertEl($("#screenTest"), "screenTest"),
+      levels: assertEl($("#screenLevels"), "screenLevels"),
+      flash: assertEl($("#screenFlash"), "screenFlash"),
+    };
+
+    // Top navigation
+    const btnHome = assertEl($("#btnHome"), "btnHome");
+    const btnLevels = assertEl($("#btnLevels"), "btnLevels");
+    const btnReset = assertEl($("#btnReset"), "btnReset");
+
+    // Home buttons
+    const btnGoTest = assertEl($("#btnGoTest"), "btnGoTest");
+    const btnGoFlash = assertEl($("#btnGoFlash"), "btnGoFlash");
+
+    // Levels (flash)
+    const levelList = assertEl($("#levelList"), "levelList");
+    const shuffleToggle = assertEl($("#shuffleToggle"), "shuffleToggle");
+    const loopToggle = assertEl($("#loopToggle"), "loopToggle");
+    const romajiCheck = assertEl($("#romajiCheck"), "romajiCheck");
+
+    // Flash view
+    const levelBadge = assertEl($("#levelBadge"), "levelBadge");
+    const progressText = assertEl($("#progressText"), "progressText");
+    const viewKanji = assertEl($("#viewKanji"), "viewKanji");
+    const viewReading = assertEl($("#viewReading"), "viewReading");
+    const viewReadingRomaji = assertEl($("#viewReadingRomaji"), "viewReadingRomaji");
+    const viewWord = assertEl($("#viewWord"), "viewWord");
+    const viewWordReading = assertEl($("#viewWordReading"), "viewWordReading");
+    const viewWordReadingRomaji = assertEl($("#viewWordReadingRomaji"), "viewWordReadingRomaji");
+    const hintText = assertEl($("#hintText"), "hintText");
+    const prevBtn = assertEl($("#prevBtn"), "prevBtn");
+    const revealBtn = assertEl($("#revealBtn"), "revealBtn");
+    const nextBtn = assertEl($("#nextBtn"), "nextBtn");
+    const backToLevels = assertEl($("#backToLevels"), "backToLevels");
+
+    // Test config
+    const testLevelList = assertEl($("#testLevelList"), "testLevelList");
+    const testRomajiCheck = assertEl($("#testRomajiCheck"), "testRomajiCheck");
+    const btnTestStart = assertEl($("#btnTestStart"), "btnTestStart");
+
+    // Test screen
+    const testBadge = assertEl($("#testBadge"), "testBadge");
+    const testProgress = assertEl($("#testProgress"), "testProgress");
+    const testKanji = assertEl($("#testKanji"), "testKanji");
+    const testKanjiHint = assertEl($("#testKanjiHint"), "testKanjiHint");
+    const testHint = assertEl($("#testHint"), "testHint");
+    const testMark = assertEl($("#testMark"), "testMark");
+    const testCompound = assertEl($("#testCompound"), "testCompound");
+    const testCompoundWord = assertEl($("#testCompoundWord"), "testCompoundWord");
+    const testCompoundReading = assertEl($("#testCompoundReading"), "testCompoundReading");
+    const testCompoundRomaji = assertEl($("#testCompoundRomaji"), "testCompoundRomaji");
+    const testOptions = assertEl($("#testOptions"), "testOptions");
+    const btnTestSkip = assertEl($("#btnTestSkip"), "btnTestSkip");
+    const btnTestNext = assertEl($("#btnTestNext"), "btnTestNext");
+    const btnTestBack = assertEl($("#btnTestBack"), "btnTestBack");
+
+    // Debug
+    const debug = assertEl($("#debug"), "debug");
+    const debugFlash = assertEl($("#debugFlash"), "debugFlash");
+
+    const toast = assertEl($("#toast"), "toast");
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(() => toast.classList.remove("show"), 1200);
+    }
+
+    function setScreen(name){
+      state.screen = name;
+      Object.entries(screens).forEach(([k, el]) => el.classList.toggle("hidden", k !== name));
+      updateDebug();
+    }
+
+    function shuffleArray(arr){
+      const a = arr.slice();
+      for(let i=a.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function currentLevel(){
+      return DATA.levels.find(l => l.id === state.levelId) || null;
+    }
+
+    function currentCard(){
+      return state.deck[state.index] || null;
+    }
+
+    function updateDebug(){
+      const lvl = currentLevel();
+      const payload = {
+        screen: state.screen,
+        flash: lvl ? { level: lvl.name, index: state.index, phase: state.phase, deckSize: state.deck.length } : null,
+        toggles: { shuffle: state.shuffle, loop: state.loop, romaji: state.romaji },
+        test: {
+          selected: Array.from(state.testSelected),
+          poolSize: state.testPool.length,
+          score: state.testScore,
+          locked: state.testLocked,
+          card: state.testCard ? { kanji: state.testCard.kanji, ans: testAnswerForCard(state.testCard) } : null,
+        }
+      };
+      debug.textContent = JSON.stringify(payload, null, 2);
+      debugFlash.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    // Minimal Hepburn-ish romaji (no apostrophes)
+    function kanaToRomaji(input){
+      const s = String(input || "");
+      const map = {
+        "あ":"a","い":"i","う":"u","え":"e","お":"o",
+        "か":"ka","き":"ki","く":"ku","け":"ke","こ":"ko",
+        "さ":"sa","し":"shi","す":"su","せ":"se","そ":"so",
+        "た":"ta","ち":"chi","つ":"tsu","て":"te","と":"to",
+        "な":"na","に":"ni","ぬ":"nu","ね":"ne","の":"no",
+        "は":"ha","ひ":"hi","ふ":"fu","へ":"he","ほ":"ho",
+        "ま":"ma","み":"mi","む":"mu","め":"me","も":"mo",
+        "や":"ya","ゆ":"yu","よ":"yo",
+        "ら":"ra","り":"ri","る":"ru","れ":"re","ろ":"ro",
+        "わ":"wa","を":"o","ん":"n",
+        "が":"ga","ぎ":"gi","ぐ":"gu","げ":"ge","ご":"go",
+        "ざ":"za","じ":"ji","ず":"zu","ぜ":"ze","ぞ":"zo",
+        "だ":"da","ぢ":"ji","づ":"zu","で":"de","ど":"do",
+        "ば":"ba","び":"bi","ぶ":"bu","べ":"be","ぼ":"bo",
+        "ぱ":"pa","ぴ":"pi","ぷ":"pu","ぺ":"pe","ぽ":"po",
+        "ぁ":"a","ぃ":"i","ぅ":"u","ぇ":"e","ぉ":"o",
+        "ゃ":"ya","ゅ":"yu","ょ":"yo",
+      };
+      const digraph = {
+        "きゃ":"kya","きゅ":"kyu","きょ":"kyo",
+        "ぎゃ":"gya","ぎゅ":"gyu","ぎょ":"gyo",
+        "しゃ":"sha","しゅ":"shu","しょ":"sho",
+        "じゃ":"ja","じゅ":"ju","じょ":"jo",
+        "ちゃ":"cha","ちゅ":"chu","ちょ":"cho",
+        "にゃ":"nya","にゅ":"nyu","にょ":"nyo",
+        "ひゃ":"hya","ひゅ":"hyu","ひょ":"hyo",
+        "びゃ":"bya","びゅ":"byu","びょ":"byo",
+        "ぴゃ":"pya","ぴゅ":"pyu","ぴょ":"pyo",
+        "みゃ":"mya","みゅ":"myu","みょ":"myo",
+        "りゃ":"rya","りゅ":"ryu","りょ":"ryo",
+      };
+      const isSmallTsu = (ch) => ch === "っ";
+
+      let out = "";
+      for(let i=0; i<s.length; i++){
+        const ch = s[i];
+        if(ch === " " || ch === "/") { out += ch; continue; }
+        if(ch === "・") { out += " "; continue; }
+        if(ch === "ー"){
+          const m = out.match(/[aeiou](?!.*[aeiou])/);
+          if(m) out += m[0];
+          continue;
+        }
+        if(!map[ch] && !isSmallTsu(ch)){
+          out += ch;
+          continue;
+        }
+        if(isSmallTsu(ch)){
+          const pair = s.slice(i+1, i+3);
+          const roma = digraph[pair] || map[s[i+1]] || "";
+          if(roma) out += roma[0];
+          continue;
+        }
+        const pair = s.slice(i, i+2);
+        if(digraph[pair]){ out += digraph[pair]; i += 1; continue; }
+        out += map[ch] || ch;
+      }
+      return out;
+    }
+
+    // ============================
+    // Flashcards
+    // ============================
+    function resetPhase(){ state.phase = 0; }
+
+    function applyPhase(){
+      const c = currentCard();
+      if(!c) return;
+
+      viewKanji.textContent = c.kanji;
+
+      const showReading = state.phase >= 1;
+      const showWord = state.phase >= 2;
+      const showWordReading = state.phase >= 3;
+
+      viewReading.textContent = c.readingKana;
+      viewReadingRomaji.textContent = state.romaji ? kanaToRomaji(c.readingKana) : "";
+
+      viewWord.textContent = c.word || "—";
+      viewWordReading.textContent = c.wordReadingKana || "";
+      viewWordReadingRomaji.textContent = (state.romaji && c.wordReadingKana) ? kanaToRomaji(c.wordReadingKana) : "";
+
+      viewReading.classList.toggle("hidden", !showReading);
+      viewReadingRomaji.classList.toggle("hidden", !(showReading && state.romaji));
+      viewWord.classList.toggle("hidden", !showWord);
+      viewWordReading.classList.toggle("hidden", !(showWordReading && !!c.wordReadingKana));
+      viewWordReadingRomaji.classList.toggle("hidden", !(showWordReading && state.romaji && !!c.wordReadingKana));
+
+      const hints = [
+        "Space: show reading",
+        "Space: show word",
+        "Space: show word reading",
+        "Space: next kanji",
+      ];
+      hintText.textContent = hints[state.phase] || "";
+      progressText.textContent = `${state.index + 1} / ${state.deck.length}`;
+      updateDebug();
+    }
+
+    function loadLevel(levelId){
+      state.levelId = levelId;
+      const lvl = currentLevel();
+      if(!lvl) return;
+
+      const baseDeck = lvl.cards.slice();
+      state.deck = state.shuffle ? shuffleArray(baseDeck) : baseDeck;
+      state.index = 0;
+      resetPhase();
+      levelBadge.textContent = lvl.name;
+      setScreen("flash");
+      applyPhase();
+      showToast(lvl.name);
+    }
+
+    function stepReveal(){
+      if(state.phase < 3){ state.phase += 1; applyPhase(); return; }
+      goNext();
+    }
+
+    function goPrev(){
+      if(state.deck.length === 0) return;
+      if(state.index > 0) state.index -= 1;
+      else if(state.loop) state.index = state.deck.length - 1;
+      else { showToast("First card"); return; }
+      resetPhase();
+      applyPhase();
+    }
+
+    function goNext(){
+      if(state.deck.length === 0) return;
+      if(state.index < state.deck.length - 1) state.index += 1;
+      else if(state.loop) state.index = 0;
+      else { showToast("Last card"); return; }
+      resetPhase();
+      applyPhase();
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#96;"); }
+
+    function renderLevels(){
+      levelList.innerHTML = "";
+      DATA.levels.forEach(lvl => {
+        const row = document.createElement("div");
+        row.className = "level-item";
+        row.innerHTML = `
+          <div class="level-meta">
+            <div class="level-name">${escapeHtml(lvl.name)}</div>
+            <div class="level-desc">${lvl.cards.length} cards</div>
+          </div>
+          <button class="primary" data-level="${escapeAttr(lvl.id)}">Open</button>
+        `;
+        levelList.appendChild(row);
+      });
+      levelList.querySelectorAll("button[data-level]").forEach(btn => {
+        btn.addEventListener("click", () => loadLevel(btn.getAttribute("data-level")));
+      });
+      romajiCheck.checked = state.romaji;
+      updateDebug();
+    }
+
+    // ============================
+    // Test mode
+    // ============================
+    function testAnswerForCard(card){
+      // Take first reading before '/', trimmed. Example: "した / げ" -> "した"
+      const raw = String(card.readingKana || "");
+      return raw.split("/")[0].trim();
+    }
+
+    function buildTestPoolFromSelection(){
+      // Legacy: kept for backward compatibility, but test now uses item pools.
+      const ids = Array.from(state.testSelected);
+      const selectedLevels = DATA.levels.filter(l => ids.includes(l.id));
+      const cards = selectedLevels.flatMap(l => l.cards);
+      state.testPool = cards.slice();
+    }
+
+    function renderTestConfig(){
+      testLevelList.innerHTML = "";
+      DATA.levels.forEach(lvl => {
+        const row = document.createElement("div");
+        row.className = "check-item";
+        const checked = state.testSelected.has(lvl.id);
+        row.innerHTML = `
+          <label>
+            <input type="checkbox" data-lvl="${escapeAttr(lvl.id)}" ${checked ? "checked" : ""} />
+            <span>
+              <div style="font-weight:900;">${escapeHtml(lvl.name)}</div>
+              <div class="sub">${lvl.cards.length} cards</div>
+            </span>
+          </label>
+          <span class="sub">${lvl.cards.map(c => c.kanji).join(" ")}</span>
+        `;
+        testLevelList.appendChild(row);
+      });
+
+      testLevelList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener("change", () => {
+          const id = cb.getAttribute("data-lvl");
+          if(cb.checked) state.testSelected.add(id);
+          else state.testSelected.delete(id);
+          updateDebug();
+        });
+      });
+
+      testRomajiCheck.checked = state.romaji;
+      updateDebug();
+    }
+
+    function startTest(){
+      if(state.testSelected.size === 0){
+        showToast("Select at least 1 level");
+        return;
+      }
+      buildTestPoolFromSelection();
+      if(state.testPool.length < 4){
+        showToast("Need at least 4 kanji cards");
+        return;
+      }
+
+      // Build test item pools (kanji + compounds)
+      state.testItemPools = buildTestItemPool();
+      if(state.testItemPools.allItems.length < 4){
+        showToast("Not enough test items");
+        return;
+      }
+
+      state.testScore = { correct: 0, total: 0 };
+      state.testLocked = false;
+      nextTestQuestion(true);
+      setScreen("test");
+      showToast("Test started");
+    }
+
+    function pickRandomCard(pool, avoidKanji){
+      const candidates = pool.filter(c => c && c.kanji !== avoidKanji);
+      const list = candidates.length ? candidates : pool;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function unique(arr){
+      return Array.from(new Set(arr));
+    }
+
+    // ===== Test items =====
+    // In test mode, we test BOTH:
+    // 1) Kanji -> choose correct reading (4 options)
+    // 2) Compound -> choose correct reading (4 options)
+    // Compounds are NOT tied to the current kanji.
+
+    const COMPOUND_LIST = Object.values(COMPOUNDS).map(c => ({ word: c.word, readingKana: c.readingKana }));
+
+    function pickRandom(arr){
+      if(!arr || arr.length === 0) return null;
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildTestItemPool(){
+      // Build kanji items from selected levels
+      const ids = Array.from(state.testSelected);
+      const selectedLevels = DATA.levels.filter(l => ids.includes(l.id));
+      const kanjiItems = selectedLevels
+        .flatMap(l => l.cards)
+        .map(c => ({ kind: "kanji", prompt: c.kanji, answerKana: testAnswerForCard(c), promptRomaji: null }));
+
+      // Add compound items from allowed list
+      const compoundItems = COMPOUND_LIST.map(w => ({ kind: "word", prompt: w.word, answerKana: w.readingKana, promptRomaji: null }));
+
+      return { kanjiItems, compoundItems, allItems: kanjiItems.concat(compoundItems) };
+    }
+
+    function pickTestItem(prevKey){
+      // Weighted: kanji 70%, compound 30% by default (tweakable)
+      const pool = state.testItemPools?.allItems || [];
+      if(pool.length === 0) return null;
+
+      const wantCompound = Math.random() < 0.30;
+      const primary = wantCompound ? state.testItemPools.compoundItems : state.testItemPools.kanjiItems;
+      const fallback = wantCompound ? state.testItemPools.kanjiItems : state.testItemPools.compoundItems;
+
+      const pickFrom = (arr) => {
+        const candidates = arr.filter(it => `${it.kind}:${it.prompt}` !== prevKey);
+        const list = candidates.length ? candidates : arr;
+        return pickRandom(list);
+      };
+
+      return pickFrom(primary.length ? primary : pool) || pickFrom(fallback.length ? fallback : pool) || pickRandom(pool);
+    }
+
+    function setTestPromptUI(item){
+      // Reuse existing UI area.
+      // #testKanji shows either kanji or compound word.
+      testKanji.textContent = item.prompt;
+
+      // Hide the old compound box; no longer used.
+      testCompound.classList.add("hidden");
+
+      // Marker reset
+      testMark.classList.add("hidden");
+      testMark.classList.remove("good","bad");
+      testMark.textContent = "";
+
+      // Badge shows what is being tested
+      testBadge.textContent = item.kind === "kanji" ? "KANJI" : "WORD";
+
+      // Hint line
+      testHint.textContent = item.kind === "kanji" ? "Pick the reading (kana)" : "Pick the reading (kana)";
+
+      // Keep it hidden (exists to avoid null refs)
+      testKanjiHint.classList.toggle("hidden", true);
+    }
+
+    function buildOptions(correct, optionPool){
+      const distractors = unique(optionPool.filter(v => v && v !== correct));
+      const opts = [correct];
+      while(opts.length < 4){
+        const pick = distractors[Math.floor(Math.random() * distractors.length)];
+        if(pick && !opts.includes(pick)) opts.push(pick);
+      }
+      return shuffleArray(opts);
+    }
+
+    function getOptionPoolForKind(kind){
+      if(kind === "word"){
+        return COMPOUND_LIST.map(w => w.readingKana);
+      }
+      // kanji
+      const ids = Array.from(state.testSelected);
+      const selectedLevels = DATA.levels.filter(l => ids.includes(l.id));
+      return unique(selectedLevels.flatMap(l => l.cards).map(c => testAnswerForCard(c)).filter(Boolean));
+    }
+
+    // Legacy functions removed: getTestCompoundsForCard / renderTestCompoundForCard
+
+    function pickRandom(arr){
+      if(!arr || arr.length === 0) return null;
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function renderTestCompoundForCard(card){
+      const list = getTestCompoundsForCard(card);
+      const picked = pickRandom(list);
+      if(!picked){
+        testCompound.classList.add("hidden");
+        return;
+      }
+      testCompoundWord.textContent = picked.word;
+      testCompoundReading.textContent = picked.readingKana;
+      testCompoundRomaji.textContent = state.romaji ? kanaToRomaji(picked.readingKana) : "";
+      testCompoundRomaji.classList.toggle("hidden", !state.romaji);
+      testCompound.classList.remove("hidden");
+    }
+
+    function nextTestQuestion(){
+      btnTestNext.disabled = true;
+      state.testLocked = false;
+      testOptions.innerHTML = "";
+
+      const prevKey = state.testItem ? `${state.testItem.kind}:${state.testItem.prompt}` : null;
+      const item = pickTestItem(prevKey);
+      if(!item){
+        showToast("No items");
+        return;
+      }
+      state.testItem = item;
+
+      setTestPromptUI(item);
+
+      const correct = item.answerKana;
+      const optionPool = getOptionPoolForKind(item.kind);
+      const options = buildOptions(correct, optionPool);
+
+      testProgress.textContent = `${state.testScore.correct} / ${state.testScore.total}`;
+
+      options.forEach(val => {
+        const b = document.createElement("button");
+        b.className = "opt";
+        b.innerHTML = `
+          <span>
+            <div class="main">${escapeHtml(val)}</div>
+            <div class="sub">${state.romaji ? escapeHtml(kanaToRomaji(val)) : ""}</div>
+          </span>
+          <span class="sub">→</span>
+        `;
+        b.addEventListener("click", () => chooseTestAnswer(val, correct));
+        testOptions.appendChild(b);
+      });
+
+      updateDebug();
+    }
+
+    function chooseTestAnswer(chosen, correct){
+      if(state.testLocked) return;
+      state.testLocked = true;
+      state.testScore.total += 1;
+
+      const isCorrect = chosen === correct;
+      if(isCorrect) state.testScore.correct += 1;
+
+      // Mark buttons
+      const buttons = Array.from(testOptions.querySelectorAll("button.opt"));
+      buttons.forEach(b => {
+        const text = b.querySelector(".main")?.textContent || "";
+        if(text === correct) b.classList.add("good");
+        else if(text === chosen && !isCorrect) b.classList.add("bad");
+        b.disabled = true;
+      });
+
+      // Big ◯ / ✕ marker
+      testMark.textContent = isCorrect ? "◯" : "✕";
+      testMark.classList.remove("good","bad");
+      testMark.classList.add(isCorrect ? "good" : "bad");
+      testMark.classList.remove("hidden");
+
+      testProgress.textContent = `${state.testScore.correct} / ${state.testScore.total}`;
+      testHint.textContent = isCorrect ? `Correct: ${correct}` : `Wrong · Answer: ${correct}`;
+      showToast(isCorrect ? "Correct" : "Wrong");
+      btnTestNext.disabled = false;
+      updateDebug();
+    }
+
+    // ============================
+    // Navigation
+    // ============================
+    function goHome(){ setScreen("home"); showToast("Home"); }
+    function goLevels(){ setScreen("levels"); renderLevels(); showToast("Levels"); }
+    function goTestConfig(){
+      // Default: all levels checked on first visit
+      if(state.testSelected.size === 0){
+        DATA.levels.forEach(l => state.testSelected.add(l.id));
+      }
+      setScreen("testConfig");
+      renderTestConfig();
+      showToast("Test range");
+    }
+
+    // ============================
+    // Events
+    // ============================
+    btnHome.addEventListener("click", goHome);
+    btnLevels.addEventListener("click", goLevels);
+
+    btnGoTest.addEventListener("click", goTestConfig);
+    btnGoFlash.addEventListener("click", goLevels);
+
+    shuffleToggle.addEventListener("click", () => {
+      state.shuffle = !state.shuffle;
+      shuffleToggle.setAttribute("aria-pressed", String(state.shuffle));
+      shuffleToggle.textContent = `Shuffle: ${state.shuffle ? "ON" : "OFF"}`;
+      showToast(`Shuffle ${state.shuffle ? "ON" : "OFF"}`);
+      updateDebug();
+    });
+
+    loopToggle.addEventListener("click", () => {
+      state.loop = !state.loop;
+      loopToggle.setAttribute("aria-pressed", String(state.loop));
+      loopToggle.textContent = `Loop: ${state.loop ? "ON" : "OFF"}`;
+      showToast(`Loop ${state.loop ? "ON" : "OFF"}`);
+      updateDebug();
+    });
+
+    romajiCheck.addEventListener("change", () => {
+      state.romaji = !!romajiCheck.checked;
+      testRomajiCheck.checked = state.romaji;
+      showToast(`Romaji ${state.romaji ? "ON" : "OFF"}`);
+      if(state.screen === "flash") applyPhase();
+      if(state.screen === "test") nextTestQuestion();
+      updateDebug();
+    });
+
+    testRomajiCheck.addEventListener("change", () => {
+      state.romaji = !!testRomajiCheck.checked;
+      romajiCheck.checked = state.romaji;
+      showToast(`Romaji ${state.romaji ? "ON" : "OFF"}`);
+      if(state.screen === "test") nextTestQuestion();
+      updateDebug();
+    });
+
+    btnTestStart.addEventListener("click", startTest);
+    btnTestBack.addEventListener("click", goTestConfig);
+    btnTestSkip.addEventListener("click", () => {
+      showToast("Skipped");
+      nextTestQuestion();
+    });
+    btnTestNext.addEventListener("click", () => nextTestQuestion());
+
+    revealBtn.addEventListener("click", stepReveal);
+    nextBtn.addEventListener("click", goNext);
+    prevBtn.addEventListener("click", goPrev);
+    backToLevels.addEventListener("click", goLevels);
+
+    btnReset.addEventListener("click", () => {
+      state.levelId = null;
+      state.deck = [];
+      state.index = 0;
+      state.phase = 0;
+      state.shuffle = false;
+      state.loop = true;
+      state.romaji = false;
+
+      state.testSelected = new Set();
+      state.testPool = [];
+      state.testCard = null;
+      state.testLocked = false;
+      state.testScore = { correct: 0, total: 0 };
+
+      shuffleToggle.setAttribute("aria-pressed","false");
+      shuffleToggle.textContent = "Shuffle: OFF";
+      loopToggle.setAttribute("aria-pressed","true");
+      loopToggle.textContent = "Loop: ON";
+      romajiCheck.checked = false;
+      testRomajiCheck.checked = false;
+
+      goHome();
+      showToast("Reset");
+      updateDebug();
+    });
+
+    // Keyboard
+    window.addEventListener("keydown", (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      if(tag === "input" || tag === "textarea" || e.isComposing) return;
+
+      if(state.screen === "flash"){
+        if(e.code === "Space"){ e.preventDefault(); stepReveal(); }
+        if(e.key === "ArrowRight"){ e.preventDefault(); goNext(); }
+        if(e.key === "ArrowLeft"){ e.preventDefault(); goPrev(); }
+        if(e.key.toLowerCase() === "r"){
+          e.preventDefault();
+          state.romaji = !state.romaji;
+          romajiCheck.checked = state.romaji;
+          testRomajiCheck.checked = state.romaji;
+          showToast(`Romaji ${state.romaji ? "ON" : "OFF"}`);
+          applyPhase();
+          updateDebug();
+        }
+        if(e.key === "Escape"){ e.preventDefault(); goLevels(); }
+      }
+
+      if(state.screen === "test"){
+        if(e.key.toLowerCase() === "r"){
+          e.preventDefault();
+          state.romaji = !state.romaji;
+          romajiCheck.checked = state.romaji;
+          testRomajiCheck.checked = state.romaji;
+          showToast(`Romaji ${state.romaji ? "ON" : "OFF"}`);
+          nextTestQuestion();
+          updateDebug();
+        }
+        if(e.key === "Escape"){ e.preventDefault(); goTestConfig(); }
+      }
+    });
+
+    // ============================
+    // Self-tests (run in console)
+    // ============================
+    function runSelfTests(){
+      const results = [];
+      const t = (name, fn) => {
+        try{ fn(); results.push({ name, ok:true }); }
+        catch(err){ results.push({ name, ok:false, err: String(err?.message || err) }); }
+      };
+      const expect = (cond, msg) => { if(!cond) throw new Error(msg); };
+
+      t("DOM: required test elements exist", () => {
+        expect(!!$("#testKanjiHint"), "#testKanjiHint missing");
+        expect(!!$("#testMark"), "#testMark missing");
+        expect(!!$("#testCompound"), "#testCompound missing");
+      });
+
+      t("Romaji: no apostrophes", () => {
+        const r = kanaToRomaji("んあ");
+        expect(!r.includes("'"), `Unexpected apostrophe in romaji: ${r}`);
+      });
+
+      t("Compounds list includes タイ王国", () => {
+        expect(COMPOUND_LIST.some(x => x.word === "タイ王国"), "Expected タイ王国 in compound list");
+      });
+
+      t("Test items include both kanji and word kinds", () => {
+        state.testSelected = new Set(DATA.levels.map(l => l.id));
+        state.testItemPools = buildTestItemPool();
+        const kinds = new Set(state.testItemPools.allItems.map(x => x.kind));
+        expect(kinds.has("kanji"), "Missing kanji items");
+        expect(kinds.has("word"), "Missing word items");
+      });
+
+      console.table(results);
+      const failed = results.filter(r => !r.ok);
+      if(failed.length) throw new Error(`Self-tests failed: ${failed.map(f => f.name).join(", ")}`);
+    }
+
+    // Boot
+    goHome();
+    updateDebug();
+    runSelfTests();
+  </script>
+</body>
+</html>
