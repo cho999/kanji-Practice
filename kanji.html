@@ -139,6 +139,41 @@
     .word{ font-size: 44px; font-weight: 900; margin:0; }
     .wordReading{ font-size: 26px; font-weight: 800; margin:0; color: rgba(230,233,242,.92); }
     .romaji{ margin:8px 0 0; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+
+    /* Flashcard mode: furigana-style reading on the target kanji */
+    #screenFlash .flash-reading-above,
+    #screenFlash .flash-reading-romaji{
+      display:none !important;
+    }
+    #screenFlash .big{
+      margin:0;
+      line-height:1.25;
+    }
+    #screenFlash ruby{
+      ruby-position: over;
+      ruby-align: center;
+    }
+    #screenFlash rt{
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+      color: rgba(230,233,242,.96);
+    }
+    #screenFlash rt .ruby-romaji{
+      display:block;
+      margin-top:4px;
+      font-size:14px;
+      font-weight:800;
+      color: var(--muted);
+      letter-spacing:.02em;
+    }
+    .flash-reading-romaji{
+      margin-top:10px;
+      font-size:18px;
+      font-weight:800;
+      color: var(--muted);
+    }
+
     .hint{ margin-top:8px; font-size:12px; color: var(--muted); }
 
     .fc-controls{ display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; }
@@ -357,9 +392,9 @@
 
             <div class="stage" id="stage" aria-live="polite">
               <div>
+                <p class="reading hidden flash-reading-above" id="viewReading">かな</p>
+                <p class="romaji hidden flash-reading-romaji" id="viewReadingRomaji">romaji</p>
                 <p class="big" id="viewKanji">漢</p>
-                <p class="reading hidden" id="viewReading">かな</p>
-                <p class="romaji hidden" id="viewReadingRomaji">romaji</p>
                 <p class="word hidden" id="viewWord">—</p>
                 <p class="wordReading hidden" id="viewWordReading"></p>
                 <p class="romaji hidden" id="viewWordReadingRomaji"></p>
@@ -407,71 +442,40 @@
 
     // Only these compounds are allowed
     const COMPOUNDS = {
-      "中国人": { word: "中国人", readingKana: "ちゅうごくじん" },
-      "外国": { word: "外国", readingKana: "がいこく" },
-      "午前": { word: "午前", readingKana: "ごぜん" },
-      "午後": { word: "午後", readingKana: "ごご" },
-      "前後": { word: "前後", readingKana: "ぜんご" },
-      "一じ間": { word: "一じ間", readingKana: "いちじかん" },
-      "東南アジア": { word: "東南アジア", readingKana: "とうなんあじあ" },
-      "男の人": { word: "男の人", readingKana: "おとこのひと" },
-      "女の人": { word: "女の人", readingKana: "おんなのひと" },
-      "男子": { word: "男子", readingKana: "だんし" },
-      "女子": { word: "女子", readingKana: "じょし" },
-      "学生": { word: "学生", readingKana: "がくせい" },
-      "先生": { word: "先生", readingKana: "せんせい" },
-      "人生": { word: "人生", readingKana: "じんせい" },
-      "父": { word: "父", readingKana: "ちち" },
-      "母": { word: "母", readingKana: "はは" },
-      "お父さん": { word: "お父さん", readingKana: "おとうさん" },
-      "お母さん": { word: "お母さん", readingKana: "おかあさん" },
-      "今年": { word: "今年", readingKana: "ことし" },
-      "去年": { word: "去年", readingKana: "きょねん" },
-      "毎日": { word: "毎日", readingKana: "まいにち" },
-      "毎年": { word: "毎年", readingKana: "まいとし" },
-      "タイ王国": { word: "タイ王国", readingKana: "たいおうこく" },
+      "先週": { word: "先週", readingKana: "せんしゅう" },
+      "王国": { word: "王国", readingKana: "おうこく" },
     };
 
     // Kanji pool (order-free). Words are optional; ONLY those listed above are used.
     const KANJI_POOL = [
-      { kanji: "下", readingKana: "した / げ" },
-      { kanji: "上", readingKana: "うえ / じょう" },
-      { kanji: "中", readingKana: "なか / ちゅう", word: COMPOUNDS["中国人"].word, wordReadingKana: COMPOUNDS["中国人"].readingKana },
-      { kanji: "外", readingKana: "そと / がい", word: COMPOUNDS["外国"].word, wordReadingKana: COMPOUNDS["外国"].readingKana },
-      { kanji: "右", readingKana: "みぎ" },
-
-      { kanji: "工", readingKana: "こう" },
-      { kanji: "左", readingKana: "ひだり" },
-      { kanji: "前", readingKana: "まえ / ぜん", word: COMPOUNDS["前後"].word, wordReadingKana: COMPOUNDS["前後"].readingKana },
-      { kanji: "後", readingKana: "うしろ / ご", word: COMPOUNDS["前後"].word, wordReadingKana: COMPOUNDS["前後"].readingKana },
-      { kanji: "午", readingKana: "ご", word: COMPOUNDS["午前"].word, wordReadingKana: COMPOUNDS["午前"].readingKana },
-
-      { kanji: "門", readingKana: "もん" },
-      { kanji: "間", readingKana: "あいだ / かん", word: COMPOUNDS["一じ間"].word, wordReadingKana: COMPOUNDS["一じ間"].readingKana },
-      { kanji: "東", readingKana: "ひがし / とう", word: COMPOUNDS["東南アジア"].word, wordReadingKana: COMPOUNDS["東南アジア"].readingKana },
-      { kanji: "西", readingKana: "にし / せい" },
-      { kanji: "南", readingKana: "みなみ / なん" },
-
-      { kanji: "北", readingKana: "きた / ほく" },
-      { kanji: "田", readingKana: "た" },
-      { kanji: "力", readingKana: "ちから / りき" },
-      { kanji: "男", readingKana: "おとこ / だん", word: COMPOUNDS["男の人"].word, wordReadingKana: COMPOUNDS["男の人"].readingKana },
-      { kanji: "女", readingKana: "おんな / じょ", word: COMPOUNDS["女の人"].word, wordReadingKana: COMPOUNDS["女の人"].readingKana },
-
-      { kanji: "子", readingKana: "こ / し", word: COMPOUNDS["男子"].word, wordReadingKana: COMPOUNDS["男子"].readingKana },
-      { kanji: "学", readingKana: "がく", word: COMPOUNDS["学生"].word, wordReadingKana: COMPOUNDS["学生"].readingKana },
-      { kanji: "生", readingKana: "せい", word: COMPOUNDS["人生"].word, wordReadingKana: COMPOUNDS["人生"].readingKana },
-      { kanji: "先", readingKana: "さき / せん", word: COMPOUNDS["先生"].word, wordReadingKana: COMPOUNDS["先生"].readingKana },
-      { kanji: "何", readingKana: "なに" },
-
-      { kanji: "父", readingKana: "ちち / とう", word: COMPOUNDS["父"].word, wordReadingKana: COMPOUNDS["父"].readingKana },
-      { kanji: "母", readingKana: "はは / かあ", word: COMPOUNDS["母"].word, wordReadingKana: COMPOUNDS["母"].readingKana },
-      { kanji: "年", readingKana: "とし / ねん", word: COMPOUNDS["今年"].word, wordReadingKana: COMPOUNDS["今年"].readingKana },
-      { kanji: "去", readingKana: "きょ", word: COMPOUNDS["去年"].word, wordReadingKana: COMPOUNDS["去年"].readingKana },
-      { kanji: "毎", readingKana: "まい", word: COMPOUNDS["毎日"].word, wordReadingKana: COMPOUNDS["毎日"].readingKana },
-
-      { kanji: "王", readingKana: "おう", word: COMPOUNDS["タイ王国"].word, wordReadingKana: COMPOUNDS["タイ王国"].readingKana },
-      { kanji: "国", readingKana: "くに / こく", word: COMPOUNDS["タイ王国"].word, wordReadingKana: COMPOUNDS["タイ王国"].readingKana },
+      { kanji: "見ます", readingKana: "み" },
+      { kanji: "行きます", readingKana: "い" },
+      { kanji: "米", readingKana: "こめ" },
+      { kanji: "来ます", readingKana: "き" },
+      { kanji: "良い", readingKana: "い" },
+      { kanji: "食べます", readingKana: "た" },
+      { kanji: "飲みます", readingKana: "の" },
+      { kanji: "会います", readingKana: "あ" },
+      { kanji: "耳", readingKana: "みみ" },
+      { kanji: "聞きます", readingKana: "き" },
+      { kanji: "言います", readingKana: "い" },
+      { kanji: "話します", readingKana: "はな" },
+      { kanji: "立ちます", readingKana: "た" },
+      { kanji: "待ちます", readingKana: "ま" },
+      { kanji: "周ります", readingKana: "まわ" },
+      { kanji: "週", readingKana: "しゅう", word: COMPOUNDS["先週"].word, wordReadingKana: COMPOUNDS["先週"].readingKana },
+      { kanji: "大きい", readingKana: "おお" },
+      { kanji: "小さい", readingKana: "ちい" },
+      { kanji: "高い", readingKana: "たか" },
+      { kanji: "安い", readingKana: "やす" },
+      { kanji: "国", readingKana: "くに", word: COMPOUNDS["王国"].word, wordReadingKana: COMPOUNDS["王国"].readingKana },
+      { kanji: "王", readingKana: "おう", word: COMPOUNDS["王国"].word, wordReadingKana: COMPOUNDS["王国"].readingKana },
+      { kanji: "年", readingKana: "ねん" },
+      { kanji: "父", readingKana: "ちち" },
+      { kanji: "男", readingKana: "おとこ" },
+      { kanji: "女", readingKana: "おんな" },
+      { kanji: "母", readingKana: "はは" },
+      { kanji: "子", readingKana: "こ" },
     ];
 
     function buildLevels(pool){
@@ -699,21 +703,23 @@
       const c = currentCard();
       if(!c) return;
 
-      viewKanji.textContent = c.kanji;
-
       const showReading = state.phase >= 1;
       const showWord = state.phase >= 2;
       const showWordReading = state.phase >= 3;
 
-      viewReading.textContent = c.readingKana;
-      viewReadingRomaji.textContent = state.romaji ? kanaToRomaji(c.readingKana) : "";
+      viewKanji.innerHTML = renderPromptWithRuby(c.kanji, c.readingKana, showReading);
+
+      // Reading is rendered as ruby directly on the target kanji.
+      // Romaji is included inside the ruby answer when the Romaji checkbox is ON.
+      viewReading.textContent = "";
+      viewReadingRomaji.textContent = "";
 
       viewWord.textContent = c.word || "—";
       viewWordReading.textContent = c.wordReadingKana || "";
       viewWordReadingRomaji.textContent = (state.romaji && c.wordReadingKana) ? kanaToRomaji(c.wordReadingKana) : "";
 
-      viewReading.classList.toggle("hidden", !showReading);
-      viewReadingRomaji.classList.toggle("hidden", !(showReading && state.romaji));
+      viewReading.classList.add("hidden");
+      viewReadingRomaji.classList.add("hidden");
       viewWord.classList.toggle("hidden", !showWord);
       viewWordReading.classList.toggle("hidden", !(showWordReading && !!c.wordReadingKana));
       viewWordReadingRomaji.classList.toggle("hidden", !(showWordReading && state.romaji && !!c.wordReadingKana));
@@ -777,6 +783,22 @@
     }
     function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#96;"); }
 
+    function renderPromptWithRuby(text, readingKana, showReading){
+      const raw = String(text || "");
+      if(!showReading || raw.length === 0) return escapeHtml(raw);
+
+      // Put the answer reading directly above the target kanji/kana word.
+      // When Romaji is ON, show it in the same ruby area so it cannot drift away.
+      const first = raw[0];
+      const rest = raw.slice(1);
+      const reading = String(readingKana || "").split("/")[0].trim();
+      const romaji = state.romaji ? kanaToRomaji(reading) : "";
+      const rt = romaji
+        ? `${escapeHtml(reading)}<span class="ruby-romaji">${escapeHtml(romaji)}</span>`
+        : escapeHtml(reading);
+      return `<ruby><rb>${escapeHtml(first)}</rb><rt>${rt}</rt></ruby>${escapeHtml(rest)}`;
+    }
+
     function renderLevels(){
       levelList.innerHTML = "";
       DATA.levels.forEach(lvl => {
@@ -785,7 +807,7 @@
         row.innerHTML = `
           <div class="level-meta">
             <div class="level-name">${escapeHtml(lvl.name)}</div>
-            <div class="level-desc">${lvl.cards.length} cards</div>
+            <div class="level-desc">${lvl.cards.length} cards · ${escapeHtml(lvl.cards.map(c => c.kanji).join(" "))}</div>
           </div>
           <button class="primary" data-level="${escapeAttr(lvl.id)}">Open</button>
         `;
@@ -951,23 +973,34 @@
     }
 
     function buildOptions(correct, optionPool){
-      const distractors = unique(optionPool.filter(v => v && v !== correct));
+      // Avoid freezing when the selected level has fewer than 4 unique readings.
+      // First use the requested pool, then fall back to every reading in the app.
+      const fallbackPool = unique(
+        DATA.levels.flatMap(l => l.cards).map(c => testAnswerForCard(c))
+          .concat(COMPOUND_LIST.map(w => w.readingKana))
+          .filter(Boolean)
+      );
+      const source = unique([...(optionPool || []), ...fallbackPool].filter(Boolean));
+      const distractors = shuffleArray(source.filter(v => v !== correct));
       const opts = [correct];
-      while(opts.length < 4){
-        const pick = distractors[Math.floor(Math.random() * distractors.length)];
+
+      for(const pick of distractors){
+        if(opts.length >= 4) break;
         if(pick && !opts.includes(pick)) opts.push(pick);
       }
+
+      // Final safety net: return fewer than 4 rather than locking the UI.
       return shuffleArray(opts);
     }
 
     function getOptionPoolForKind(kind){
-      if(kind === "word"){
-        return COMPOUND_LIST.map(w => w.readingKana);
-      }
-      // kanji
       const ids = Array.from(state.testSelected);
       const selectedLevels = DATA.levels.filter(l => ids.includes(l.id));
-      return unique(selectedLevels.flatMap(l => l.cards).map(c => testAnswerForCard(c)).filter(Boolean));
+      const selectedKanjiReadings = unique(selectedLevels.flatMap(l => l.cards).map(c => testAnswerForCard(c)).filter(Boolean));
+      const compoundReadings = unique(COMPOUND_LIST.map(w => w.readingKana).filter(Boolean));
+      const allReadings = unique(selectedKanjiReadings.concat(compoundReadings));
+
+      return allReadings;
     }
 
     // Legacy functions removed: getTestCompoundsForCard / renderTestCompoundForCard
